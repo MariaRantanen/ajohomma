@@ -5,15 +5,22 @@ import {Button, SegmentedButtons, TextInput} from 'react-native-paper';
 import {Trip} from '../types/Trip';
 import {cleanNumberText, parseNumber} from '../utils/numbers';
 import {DateTimeField} from './DateTimeField';
+import {newId} from '../utils/newId';
 
 type Props = {
-    initialValue?: Trip;
+    initialValue?: Trip | null;
     onSubmit?: (trip: Trip) => void;
+    onDelete?: () => void;
 };
 
-export default function TripForm({onSubmit, initialValue: iv}: Props) {
+export default function TripForm({
+    onSubmit,
+    initialValue: iv,
+    onDelete,
+}: Props) {
     const defaultCar = 'car1';
 
+    const [id] = useState(iv?.id ?? newId());
     const [vehicle, setVehicle] = useState(iv?.vehicleId ?? defaultCar);
     const [description, setDescription] = useState(iv?.description ?? '');
     const [timestampAtBegin, setTimestampAtBegin] = useState<Date | null>(
@@ -34,6 +41,7 @@ export default function TripForm({onSubmit, initialValue: iv}: Props) {
 
     function submitForm() {
         const trip: Trip = {
+            id,
             vehicleId: vehicle,
             description,
             timestampAtBegin,
@@ -88,9 +96,16 @@ export default function TripForm({onSubmit, initialValue: iv}: Props) {
                 value={routeDescription}
                 onChangeText={setRouteDescription}
             />
-            <Button onPress={submitForm} mode="contained">
-                Tallenna
-            </Button>
+            {onSubmit ? (
+                <Button onPress={submitForm} mode="contained">
+                    Tallenna
+                </Button>
+            ) : null}
+            {onDelete ? (
+                <Button onPress={() => onDelete()} mode="outlined">
+                    Poista
+                </Button>
+            ) : null}
         </ScrollView>
     );
 }
