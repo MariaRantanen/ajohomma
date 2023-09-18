@@ -2,15 +2,15 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {NavigationContainer} from '@react-navigation/native';
 import * as React from 'react';
-import {View} from 'react-native';
 import {
-    Button,
     MD3LightTheme as DefaultTheme,
     PaperProvider,
 } from 'react-native-paper';
 
-import TripForm from './components/TripForm';
+import NewTripCreator from './components/NewTripCreator';
 import TripList from './components/TripList';
+import {Trip} from './types/Trip';
+import {deleteTrip, loadTrips, saveTrip} from './utils/store';
 
 const theme = {
     ...DefaultTheme,
@@ -25,7 +25,7 @@ const Nav = createBottomTabNavigator();
 
 const tabIcons = {
     home: ['ios-home', 'ios-home-outline'],
-    other: ['ios-car', 'ios-car-outline'],
+    newTrip: ['ios-car', 'ios-car-outline'],
 };
 
 const getScreenOptions = ({route}) => ({
@@ -50,30 +50,43 @@ export default function App() {
 }
 
 function InnerApp() {
+    const [trips, setTrips] = React.useState<Trip[]>(loadTrips());
+
+    function TripListScreen() {
+        return (
+            <TripList
+                trips={trips}
+                saveTrip={saveTrip}
+                deleteTrip={deleteTrip}
+            />
+        );
+    }
+
+    function NewTripScreen({navigation}) {
+        return (
+            <NewTripCreator
+                onStarted={() => {
+                    setTrips(loadTrips());
+                    navigation.navigate('home');
+                }}
+            />
+        );
+    }
+
     return (
         <NavigationContainer>
             <Nav.Navigator screenOptions={getScreenOptions}>
                 <Nav.Screen
                     name="home"
-                    component={TripList}
+                    component={TripListScreen}
                     options={{title: 'Aloitusruutu'}}
                 />
                 <Nav.Screen
-                    name="other"
-                    component={TripForm}
+                    name="newTrip"
+                    component={NewTripScreen}
                     options={{title: 'Uusi matka'}}
                 />
             </Nav.Navigator>
         </NavigationContainer>
-    );
-}
-
-function ButtonOnlyView({navigation}) {
-    return (
-        <View>
-            <Button onPress={() => navigation.navigate('other')}>
-                Syötä matka
-            </Button>
-        </View>
     );
 }
