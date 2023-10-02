@@ -32,11 +32,11 @@ export default function App() {
 
     return (
         <PaperProvider theme={theme}>
-            {settingsOk == null ? <ActivityIndicator/> : !settingsOk ? (
+            {settingsOk == null ?( <ActivityIndicator/> ) : !settingsOk ? (
                 <SettingsScreen onChange={updateSettingsOk} />
             ) : (
                 <Main />
             )}
         </PaperProvider>
     );
-}
+            }
