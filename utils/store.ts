@@ -1,190 +1,91 @@
 import {Trip} from '../types/Trip';
+import {loadJsonFile, overwriteJsonFile} from './jsonFiles';
 import {newId} from './newId';
 
-export function loadTrips(): Trip[] {
-    trips.sort((a: Trip, b: Trip) => {
-        return a.id > b.id ? -1 : a.id == b.id ? 0 : 1;
-    });
-    return trips;
+const TRIPS_FILE = 'ajokilsat.json';
+
+let savedTrips: Trip[] | null = null;
+
+export async function getTrip(tripId: string) {
+    const trips = await loadTrips();
+    const trip: Trip | undefined = trips.find((x) => x.id === tripId);
+    if (trip === undefined) throw Error(`Ei löydy matkaa id:llä ${tripId}`);
+    return trip;
 }
 
-export function saveTrip(trip: Trip): void {
+export async function loadTrips(reload: boolean = false): Promise<Trip[]> {
+    if (savedTrips === null || reload) {
+        savedTrips = await loadJsonFile(TRIPS_FILE);
+    }
+
+    return savedTrips ?? exampleTrips;
+}
+
+export async function saveTrip(trip: Trip): Promise<void> {
+    const trips = await loadTrips();
+
     const index = trips.findIndex((x) => x.id === trip.id);
     if (index < 0) {
         // Ei löytynyt id:llä => Uusi matka
-        trips.push(trip); // Lisätään annettu trip listan trips loppuun
+        trips.unshift(trip); // Lisätään annettu trip listan trips alkuun
     } else {
         trips[index] = trip; // Päivitetään ko. indexissä olevaa trippiä
     }
+
+    // Järjestä tripit aloitusajan tai id:n mukaan
+    trips.sort((tripA: Trip, tripB: Trip) => {
+        const a = tripA.timestampAtBegin ?? null;
+        const b = tripB.timestampAtBegin ?? null;
+        if (a == b) {
+            // Vertaile id:n perusteella, jos timestampit ovat samat
+            // tai puuttuvat molemmista
+            const aId = tripA.id;
+            const bId = tripB.id;
+            return aId > bId ? -1 : aId == bId ? 0 : 1;
+        }
+        return a > b ? -1 : 1;
+    });
+    await saveTripsToFile(trips);
 }
 
-export function deleteTrip({id}: {id: string}): void {
+export async function deleteTrip({id}: {id: string}): Promise<void> {
+    const trips = await loadTrips();
     const index = trips.findIndex((x) => x.id === id);
     if (index < 0) {
         throw new Error(`Matkaa id:llä ${id} ei löydy`);
     }
     trips.splice(index, 1); // Poista 1 alkio kohdasta index
+    await saveTripsToFile(trips);
 }
 
-let trips: Trip[] = [
+async function saveTripsToFile(trips: Trip[]) {
+    // Tallenna myös muuttujaan, jotta loadTrips varmasti palauttaa
+    // tallennetut muutokset vaikka sitä kutsuttaisiin reload=false:lla.
+    // HUOM: Käyttää [...trips] decontruktointia, jotta savedTrips:n
+    // sisältö muuttuu jolloin React varmasti huomaa muutokset
+    savedTrips = [...trips];
+    await overwriteJsonFile(TRIPS_FILE, savedTrips);
+}
+
+const exampleTrips: Trip[] = [
     {
         id: newId(),
         vehicleId: 'car1',
-        description: 'Käynti Devin Testisen luona',
+        description: 'Työmatka',
+        timestampAtBegin: new Date(2023, 8, 18, 8, 15),
+        timestampAtEnd: new Date(2023, 8, 18, 9, 15),
+        routeDescription: 'Salo - Helsinki',
+        odometerAtBegin: 125052,
+        odometerAtEnd: 125118,
     },
     {
         id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Dan Testisen luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Dominic Testisen luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Jackson Testisen luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti James Testisen luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Joel Testisen luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti John Testisen luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Jillian Testisen luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Jimmy Testisen luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Julie Testisen luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Kalle Testisen luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Laura Testisen luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Matti Testisen luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Noora Testisen luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Olli Testisen luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Petra Testisen luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Devin Kokeilijan luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Dan Kokeilijan luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Dominic Kokeilijan luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Jackson Kokeilijan luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti James Kokeilijan luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Joel Kokeilijan luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti John Kokeilijan luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Jillian Kokeilijan luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Jimmy Kokeilijan luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Julie Kokeilijan luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Kalle Kokeilijan luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Laura Kokeilijan luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Matti Kokeilijan luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Noora Kokeilijan luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Olli Kokeilijan luona',
-    },
-    {
-        id: newId(),
-        vehicleId: 'car1',
-        description: 'Käynti Petra Kokeilijan luona',
+        vehicleId: 'car2',
+        description: 'Visiitti Ahvenanmaalle',
+        timestampAtBegin: new Date(2023, 8, 15, 10, 45),
+        timestampAtEnd: new Date(2023, 8, 15, 22, 35),
+        routeDescription: 'Tampere - Turku - Laiva - Ahvenanmaa',
+        odometerAtBegin: 125130,
+        odometerAtEnd: 125445,
     },
 ];
